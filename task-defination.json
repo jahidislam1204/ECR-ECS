@@ -1,0 +1,25 @@
+task-defination.json
+
+{
+  "family": "ecs-demo-task-defination",
+  "requiresCompatibilities": ["EC2"],
+  "networkMode": "bridge",
+  "cpu": "250",
+  "memory": "300",
+  "taskRoleArn": "arn:aws:iam::<your-account-id>:role/ecsTaskExecutionRole", # use own account-id
+  "executionRoleArn": "arn:aws:iam::<your-account-id>:role/ecsTaskExecutionRole",  # use own account-id
+  "containerDefinitions": [
+    {
+      "name": "ecs-demo-container",
+      "image": "442417563.dkr.ecr.ap-south-1.amazonaws.com/ecr-demo",
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true
+    }
+  ]
+}
