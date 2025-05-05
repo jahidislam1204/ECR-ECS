@@ -1,107 +1,84 @@
-# 🚀 Deploying Docker Applications with Amazon ECR and ECS (EC2)
+# Deploying Docker Applications with Amazon ECR and ECS (EC2)
 
-This guide walks through how to build a Docker image, push it to **Amazon Elastic Container Registry (ECR)**, and deploy it using **Amazon Elastic Container Service (ECS)** with **EC2 launch type**.
 
----
 
-## 📦 Step 1: Create Repository in Amazon ECR
 
-1. Open the AWS Console and search for **ECR**.
-2. Navigate to **Repositories** > **Create repository**.
-3. Set a name, e.g., `demo-ecr`.
-4. Follow the commands below to push a Docker image:
+ECR(Elastic Container Registry) && ECS (Elastic Container Service)
 
-```bash
-# Log in to Amazon ECR Public
-aws ecr-public get-login-password --region us-east-1 | \
-docker login --username AWS --password-stdin public.ecr.aws/j9i5p7k2
 
-# Build Docker image
-docker build -t ecr-demo .
+--------------Create Repositories in ECR--------------
+ 
+ -> search ECR
+ -> Go to Repositories
+ -> Create Repositories (demo-ecr)
+ -> To push a docker-image run these command on cli and must be login into your local machine
 
-# Tag the Docker image
-docker tag ecr-demo:latest public.ecr.aws/j9i5p7k2/ecr-demo:latest
+. aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/j9i5p7k2
+. docker build -t ecr-demo 
+. docker tag ecr-demo:latest public.ecr.aws/j9i5p7k2/ecr-demo:latest
+. docker push public.ecr.aws/j9i5p7k2/ecr-demo:latest
 
-# Push the Docker image to ECR
-docker push public.ecr.aws/j9i5p7k2/ecr-demo:latest
-```
-🖥️ Step 2: Create ECS Cluster (EC2 Launch Type)
-Go to ECS > Clusters > Create Cluster.
 
-Choose EC2 Linux + Networking.
 
-Configure the cluster:
+---------------------- Create a cluster on EC2 ------------------
+-> select EC2 Linux + Networking
+-> Configure cluster
+            - Cluster name (ecs demo)
+			- provisioning model (on-demand Instance)
+			- EC2 instance type (t2.micro)
+			- number of instance (1)
+			- select vpc,subnets,security group those already created
+			- Container instance IAM role (create new role)
+-> create			
+			
+---------------------- Create Task Defination --------------------
 
-Cluster name: ecs-demo
+-> Create new task defination
+-> select launch type compatibilty(EC2)
+-> Task Defination name (ecs-demo-task-defination)
+           . check the given permission in IAM console 
+		   . if not given go to the IAM console
+		   . search "ecsTaskExecutionRole"
+		   . select it and add permission
+-> Task Role ("ecsTaskExecutionRole" That already created)
+-> Task execution role ("ecsTaskExecutionRole" That already created)
+-> memory (300)
+-> cpu(250)
+-> add a container 
+               . name (ecs-demo-container)
+			   . image (copy-paste the image url that already created in ECR eg. 442417563.dkr.ecr.ap-south-1.amazonaws.com/ecr-demo)
+			   . port mappings (8080:80 tcp)
+			   . rest of the settings remain same
+			   
+-> create
+-> check json file
 
-Provisioning model: On-Demand Instance
 
-Instance type: t2.micro
 
-Number of instances: 1
 
-VPC, subnets, and security group: select existing
+---------------------- Create Service --------------------
 
-Container instance IAM role: create a new role if not available
+-> create a service
+-> Launch type EC2
+-> select Task Defination (ecs-demo-task-defination)
+-> service name (ecs-demo-service)
+-> service type (replica)
+-> number of task (1)
+-> placement templates (AZ Balanced Spread)
+-> Load balance (none)
+-> rest of the settings remain same
+-> create service
 
-Click Create.
 
-📝 Step 3: Create Task Definition
-Go to Task Definitions > Create new Task Definition.
-
-Choose Launch Type Compatibility: EC2.
-
-Name the task: ecs-demo-task-definition.
-
-IAM Role:
-Task Role: ecsTaskExecutionRole
-
-If not found, go to IAM Console, search for ecsTaskExecutionRole, and attach the necessary permissions.
-
-Task Settings:
-Memory: 300 MiB
-
-CPU: 250
-
-Add Container:
-Container name: ecs-demo-container
-
-Image URI: your public ECR image (e.g., public.ecr.aws/j9i5p7k2/ecr-demo:latest)
-
-Port Mappings: 8080:80 TCP
-
-Click Create and review the JSON if needed.
-
-⚙️ Step 4: Create ECS Service
-Navigate to your ECS Cluster > Create Service.
-
-Settings:
-
-Launch Type: EC2
-
-Task Definition: ecs-demo-task-definition
-
-Service name: ecs-demo-service
-
-Service type: Replica
-
-Number of tasks: 1
-
-Placement templates: AZ Balanced Spread
-
-Load balancer: None
-
-Click Create Service.
-
-✅ Result
+ Result
 After a few minutes, your Docker container will be running on an EC2 instance managed by ECS. You can access the app using the Public IP of the EC2 instance on port 8080.
 
-🧠 Notes
+ Notes
 Make sure security groups allow inbound traffic on port 8080.
 
 You can monitor container logs from ECS > Task > Logs (CloudWatch).
 
-🧰 Technologies Used
+ Technologies Used
 
 Amazon Elastic Container Registry (ECR)
 
